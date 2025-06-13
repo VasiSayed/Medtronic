@@ -5,6 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Medtronic Healthcare Portal{% endblock %}</title>
     <style>
+        
+        .custom-message-container {
+  position: fixed;
+  top: 80px; /* Adjust if header is taller */
+  right: 30px;
+  width: 320px;
+  z-index: 9999;
+}
+
+.custom-alert {
+  padding: 16px 22px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  font-weight: 500;
+  color: white;
+  font-family: 'Segoe UI', sans-serif;
+  box-shadow: 0 8px 20px rgba(20, 14, 74, 0.15);
+  animation: fadeSlideIn 0.5s ease-out;
+  backdrop-filter: blur(6px);
+  background: linear-gradient(135deg, #140e4a 0%, #1a1560 100%);
+  border-left: 6px solid white;
+}
+
+/* Custom coloring based on type */
+.custom-alert.success {
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  border-left-color: #a5d6a7;
+}
+
+.custom-alert.error {
+  background: linear-gradient(135deg, #e53935, #b71c1c);
+  border-left-color: #ffcdd2;
+}
+
+.custom-alert.warning {
+  background: linear-gradient(135deg, #ff9800, #f57c00);
+  border-left-color: #ffe082;
+  color: #fff8e1;
+}
+
+.custom-alert.info {
+  background: linear-gradient(135deg, #2196f3, #1565c0);
+  border-left-color: #bbdefb;
+}
+
+/* Fade in animation */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+
+
+
         * {
             margin: 0;
             padding: 0;
@@ -424,21 +486,26 @@
     <header class="header">
         <div class="header-content">
             <h1 class="portal-name">Medtronic Healthcare Portal</h1>
-            <button> <a class="login-btn" href="{% url 'login' %}">Login</a></button>
-            
+            {% if request.user.is_authenticated %}
+            <a href="{% url 'logout' %}"><button class="login-btn"   >Logout</button></a>
+            {% else %}
+            <a c href="{% url 'login' %}"><button class="login-btn"> Login</button></a>
+            {% endif %}
         </div>
     </header>
 
     <main class="main-content">
         {% if messages %}
-        <div class="container mt-3">
+        <div class="custom-message-container">
           {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">
+            <div class="custom-alert {{ message.tags }}">
               {{ message }}
             </div>
           {% endfor %}
         </div>
       {% endif %}
+      
+      
       
         {% block content %}
 

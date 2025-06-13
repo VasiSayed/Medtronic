@@ -2,9 +2,29 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from accounts.models import User
+from django.core.validators import FileExtensionValidator
+
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
 
 
 class ProductCategory(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="product_categories")
+    name = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+class ProductType(models.Model):
+    product_category = models.ForeignKey(ProductCategory, on_delete=models.CASCADE, related_name="product_types")
     name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -14,29 +34,47 @@ class ProductCategory(models.Model):
 
 
 class Product(models.Model):
-    category = models.ForeignKey(ProductCategory, on_delete=models.CASCADE)
+    product_type = models.ForeignKey(ProductType, on_delete=models.CASCADE, related_name="products")
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     image = models.ImageField(upload_to='product_images/', blank=True, null=True)
+    attachment = models.FileField(
+        upload_to='product_files/attachments/',
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp'])],
+        help_text="Upload PDF, Word, or Image file"
+    )
+
+    video = models.FileField(
+        upload_to='product_files/videos/',
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(allowed_extensions=['mp4', 'mov', 'avi', 'mkv'])],
+        help_text="Upload video file (e.g., .mp4, .mov)"
+    )
+
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.name} ({self.category.name})"
+        return f"{self.name} ({self.product_type.name})"
 
 
 class Subproduct(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="subproducts")
     name = models.CharField(max_length=100)
     description = models.TextField()
     unit = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return f"{self.name} ({self.product.name})"
+
 
 class Region(models.Model):
-    """Stores countries by ISO‑3166 alpha‑2 code."""
-
     country_code = models.CharField(max_length=2, unique=True)
     country_name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -58,16 +96,15 @@ class OrderProductOnline(models.Model):
     region = models.ForeignKey(Region, on_delete=models.PROTECT, related_name="orders")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="orders")
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="orders")
-    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    name = models.CharField(max_length=100, help_text="Person requesting")
+    address = models.TextField(help_text="Full address of requester")
+    number = models.CharField(max_length=15, help_text="Contact number")
     order_date = models.DateTimeField(default=timezone.now)
-    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
 
     def __str__(self):
-        return (
-            f"Order #{self.pk} | {self.user} → {self.product.name} "
-            f"({self.get_status_display()})"
-        )
+        return f"Order #{self.pk} | {self.user} → {self.product.name} ({self.get_status_display()})"
 
 
 class SearchProduct(models.Model):
