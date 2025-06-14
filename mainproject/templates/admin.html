@@ -187,7 +187,7 @@
             box-shadow: 0 6px 20px rgba(233, 30, 99, 0.4);
             background: linear-gradient(45deg, #d81b60, #ad1457);
         }
-
+{% block style %}
         /* Main Content */
         .main-content {
             flex: 1;
@@ -331,6 +331,8 @@
         .service-button:hover .button-description {
             color: rgba(255, 255, 255, 0.9);
         }
+
+        {% endblock %}
 
         /* Footer */
         .footer {
@@ -655,12 +657,100 @@
                 <li><a href="{% url 'dormant_vendors' %}">Dormant Vendors</a></li>
                 <li><a href="{% url 'avg_session_vendors' %}">Avg. Session Duration per Vendor</a></li>
               </ul>
-              
-
-              
-
           </div>
         </div>
+
+        <div class="container mx-auto px-4 py-10">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 border-b pb-2">📈 Product Engagement Analytics</h2>
+        
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <a href="{% url 'most_viewed_products' %}" class="bg-white hover:bg-blue-50 transition duration-200 p-5 border rounded-2xl shadow-md hover:shadow-lg">
+                    <div class="text-2xl mb-2">📊</div>
+                    <div class="font-semibold text-lg text-blue-800">Most Viewed Products</div>
+                    <p class="text-sm text-gray-600 mt-1">See which products are getting the most views by vendors.</p>
+                </a>
+        
+                <a href="{% url 'hero_products' %}" class="bg-white hover:bg-yellow-50 transition duration-200 p-5 border rounded-2xl shadow-md hover:shadow-lg">
+                    <div class="text-2xl mb-2">🏆</div>
+                    <div class="font-semibold text-lg text-yellow-700">Hero Products</div>
+                    <p class="text-sm text-gray-600 mt-1">Top searched, downloaded, and quoted products.</p>
+                </a>
+        
+                <a href="{% url 'top_categories_engagement' %}" class="bg-white hover:bg-green-50 transition duration-200 p-5 border rounded-2xl shadow-md hover:shadow-lg">
+                    <div class="text-2xl mb-2">🧩</div>
+                    <div class="font-semibold text-lg text-green-800">Top Categories</div>
+                    <p class="text-sm text-gray-600 mt-1">Categories with the highest user engagement.</p>
+                </a>
+        
+                <a href="{% url 'most_downloaded_brochures' %}" class="bg-white hover:bg-purple-50 transition duration-200 p-5 border rounded-2xl shadow-md hover:shadow-lg">
+                    <div class="text-2xl mb-2">📥</div>
+                    <div class="font-semibold text-lg text-purple-800">Most Downloaded Brochures</div>
+                    <p class="text-sm text-gray-600 mt-1">Brochures and files vendors download the most.</p>
+                </a>
+        
+                <a href="{% url 'most_requested_products' %}" class="bg-white hover:bg-red-50 transition duration-200 p-5 border rounded-2xl shadow-md hover:shadow-lg">
+                    <div class="text-2xl mb-2">📝</div>
+                    <div class="font-semibold text-lg text-red-700">Most Requested Products</div>
+                    <p class="text-sm text-gray-600 mt-1">Products frequently quoted or requested.</p>
+                </a>
+            </div>
+        </div>
+
+
+        <div class="container mx-auto px-4 py-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">🛠️ Support & Communication Metrics</h2>
+        
+            <!-- Filter Form -->
+            <form method="get" action="{% url 'support_metrics' %}" class="mb-6">
+                <label for="period" class="mr-2 font-semibold">View for:</label>
+                <select name="period" id="period" onchange="this.form.submit()" class="border rounded p-2">
+                    <option value="today" {% if request.GET.period == 'today' %}selected{% endif %}>Today</option>
+                    <option value="month" {% if request.GET.period == 'month' or not request.GET.period %}selected{% endif %}>This Month</option>
+                    <option value="year" {% if request.GET.period == 'year' %}selected{% endif %}>This Year</option>
+                </select>
+            </form>
+        
+            <!-- Metrics Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-blue-100 p-4 rounded shadow">
+                    <h3 class="text-lg font-semibold text-blue-800">Support Tickets</h3>
+                    <p class="text-3xl font-bold mt-2">{{ support_count }}</p>
+                </div>
+                <div class="bg-green-100 p-4 rounded shadow">
+                    <h3 class="text-lg font-semibold text-green-800">Demo Requests</h3>
+                    <p class="text-3xl font-bold mt-2">{{ demo_count }}</p>
+                </div>
+                <div class="bg-yellow-100 p-4 rounded shadow">
+                    <h3 class="text-lg font-semibold text-yellow-800">Training Requests</h3>
+                    <p class="text-3xl font-bold mt-2">{{ training_count }}</p>
+                </div>
+            </div>
+        
+            <!-- Common Issues Table -->
+            <div class="mt-8">
+                <h3 class="text-xl font-bold mb-2">Most Common Issues Raised</h3>
+                <table class="table-auto w-full border">
+                    <thead>
+                        <tr>
+                            <th class="border px-4 py-2">Issue (Name)</th>
+                            <th class="border px-4 py-2">Occurrences</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for issue in common_issues %}
+                        <tr>
+                            <td class="border px-4 py-2">{{ issue.name }}</td>
+                            <td class="border px-4 py-2">{{ issue.count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="2" class="py-4 text-center text-gray-500">No issues found for selected period.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        
         {% endblock %}
       </main>
 

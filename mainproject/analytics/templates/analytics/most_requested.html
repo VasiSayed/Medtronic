@@ -1,0 +1,20 @@
+{% extends 'admin.html' %}
+{% block content %}
+<h2 class="text-xl font-bold mb-4">Most Requested/Quoted Products</h2>
+<table class="table-auto w-full border">
+    <thead>
+        <tr>
+            <th class="border px-4 py-2">Product</th>
+            <th class="border px-4 py-2">Request Count</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in products %}
+        <tr>
+            <td class="border px-4 py-2">{{ item.product__name }}</td>
+            <td class="border px-4 py-2">{{ item.requests }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

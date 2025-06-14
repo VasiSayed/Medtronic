@@ -5,6 +5,7 @@ from django.utils.timezone import now
 from django.db.models import Count, Q, F, ExpressionWrapper, DurationField, Sum
 from products.models import SearchProduct, OrderProductOnline, Wishlist
 from accounts.models import User, UserActivity
+from services.models import RequestLog
 
 def home_view(request):
     if request.user.is_authenticated and request.user.role == 'admin':
@@ -134,6 +135,19 @@ def home_view(request):
             .annotate(total_duration=Sum('duration'))
         )
 
+        support_logs = RequestLog.objects.filter(date__year=today.year, date__month=today.month)
+
+        demo_count = support_logs.filter(request_type__name='Demo').count()
+        training_count = support_logs.filter(request_type__name='Training').count()
+        support_count = support_logs.filter(request_type__name='Support').count()
+
+        common_issues = (
+            support_logs.filter(request_type__name='Support')
+            .values('name')
+            .annotate(count=Count('id'))
+            .order_by('-count')[:10]
+)
+
         avg_session_duration = sum([entry['total_duration'].total_seconds() for entry in avg_session_data], 0.0)
         avg_session_duration = avg_session_duration / len(avg_session_data) if avg_session_data else 0.0
         avg_session_duration_minutes = round(avg_session_duration / 60, 2)
@@ -154,6 +168,11 @@ def home_view(request):
             'dormant_vendors': dormant_vendors,
             'retention_rate': retention_rate,
             'avg_session_duration_minutes': avg_session_duration_minutes,
+            'support_count': support_count,
+            'demo_count': demo_count,
+            'training_count': training_count,
+            'common_issues': list(common_issues),
+
         })
 
     return render(request, 'base.html')

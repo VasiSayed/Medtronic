@@ -1,4 +1,7 @@
+from django.db.models import Count
 from django.shortcuts import render
+from products.models import SearchProduct, AttachmentDownloadLog, Product, ProductType, ProductCategory
+from services.models import RequestLog  
 from datetime import timedelta
 from accounts.models import User, UserActivity
 from datetime import datetime, timedelta
@@ -81,3 +84,85 @@ def avg_session_view(request):
         })
 
     return render(request, 'analytics/avg_session.html', {'vendor_sessions': vendor_sessions})
+
+
+
+def most_viewed_products(request):
+    data = (
+        SearchProduct.objects
+        .values('product__name')
+        .annotate(view_count=Count('id'))
+        .order_by('-view_count')[:10]
+    )
+    return render(request, 'analytics/most_viewed_products.html', {'products': data})
+
+def hero_products(request):
+    searched = SearchProduct.objects.values('product__id').annotate(count=Count('id')).order_by('-count')[:5]
+    downloaded = AttachmentDownloadLog.objects.values('product__id').annotate(count=Count('id')).order_by('-count')[:5]
+    quoted = RequestLog.objects.values('product__id').annotate(count=Count('id')).order_by('-count')[:5]
+
+    product_ids = set()
+    for group in [searched, downloaded, quoted]:
+        product_ids.update([entry['product__id'] for entry in group])
+
+    products = Product.objects.filter(id__in=product_ids)
+    return render(request, 'analytics/hero_products.html', {'products': products})
+
+def top_categories_engagement(request):
+    data = (
+        SearchProduct.objects
+        .values('product__product_type__product_category__name')
+        .annotate(total=Count('id'))
+        .order_by('-total')[:10]
+    )
+    return render(request, 'analytics/top_categories.html', {'categories': data})
+
+def most_downloaded_brochures(request):
+    data = (
+        AttachmentDownloadLog.objects
+        .values('product__name')
+        .annotate(downloads=Count('id'))
+        .order_by('-downloads')[:10]
+    )
+    return render(request, 'analytics/most_downloaded.html', {'downloads': data})
+
+def most_requested_products(request):
+    data = (
+        RequestLog.objects
+        .values('product__name')
+        .annotate(requests=Count('id'))
+        .order_by('-requests')[:10]
+    )
+    return render(request, 'analytics/most_requested.html', {'products': data})
+
+
+
+def support_metrics_view(request):
+    period = request.GET.get('period', 'month')  
+    today = now()
+
+    if period == 'today':
+        logs = RequestLog.objects.filter(date__date=today.date())
+    elif period == 'year':
+        logs = RequestLog.objects.filter(date__year=today.year)
+    else: 
+        logs = RequestLog.objects.filter(date__year=today.year, date__month=today.month)
+
+    demo_count = logs.filter(request_type__name='Demo').count()
+    training_count = logs.filter(request_type__name='Training').count()
+    support_count = logs.filter(request_type__name='Support').count()
+
+    common_issues = (
+        logs.filter(request_type__name='Support')
+        .values('name')
+        .annotate(count=Count('id'))
+        .order_by('-count')[:10]
+    )
+
+    return render(request, 'analytics/suport_metrix.html', {
+        'demo_count': demo_count,
+        'training_count': training_count,
+        'support_count': support_count,
+        'common_issues': common_issues,
+        'selected_period': period,
+    })

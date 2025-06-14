@@ -1,0 +1,51 @@
+{% extends 'admin.html' %}
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <h2 class="text-2xl font-bold mb-6">Support & Communication Metrics</h2>
+
+    <!-- Filter dropdown -->
+    <form method="get" class="mb-6">
+        <label for="period" class="mr-2 font-semibold">Filter:</label>
+        <select name="period" id="period" onchange="this.form.submit()" class="border rounded p-2">
+            <option value="today" {% if selected_period == 'today' %}selected{% endif %}>Today</option>
+            <option value="month" {% if selected_period == 'month' %}selected{% endif %}>This Month</option>
+            <option value="year" {% if selected_period == 'year' %}selected{% endif %}>This Year</option>
+        </select>
+    </form>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="p-4 bg-blue-100 border rounded shadow">
+            <h3 class="text-lg font-semibold text-blue-800">Support Tickets</h3>
+            <p class="text-3xl font-bold mt-2">{{ support_count }}</p>
+        </div>
+        <div class="p-4 bg-green-100 border rounded shadow">
+            <h3 class="text-lg font-semibold text-green-800">Demo Requests</h3>
+            <p class="text-3xl font-bold mt-2">{{ demo_count }}</p>
+        </div>
+        <div class="p-4 bg-yellow-100 border rounded shadow">
+            <h3 class="text-lg font-semibold text-yellow-800">Training Requests</h3>
+            <p class="text-3xl font-bold mt-2">{{ training_count }}</p>
+        </div>
+    </div>
+
+    <h3 class="text-xl font-bold mb-2">Most Common Issues Raised</h3>
+    <table class="table-auto w-full border">
+        <thead>
+            <tr>
+                <th class="border px-4 py-2">Issue (Request Name)</th>
+                <th class="border px-4 py-2">Count</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for issue in common_issues %}
+            <tr>
+                <td class="border px-4 py-2">{{ issue.name }}</td>
+                <td class="border px-4 py-2">{{ issue.count }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="2" class="text-center py-4">No issues found for selected period.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
