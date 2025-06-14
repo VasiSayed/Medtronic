@@ -6,21 +6,21 @@
     <div class="row justify-content-center">
         <div class="col-md-4">
             <h2 class="mb-4 text-center">Sign In</h2>
-
-            <form method="post" class="card p-4 shadow-sm">
+            <form method="post">
                 {% csrf_token %}
                 {{ form.non_field_errors }}
-                
-                <div class="mb-3">
-                    {{ form.username }}
-                    {{ form.username.errors }}
-                </div>
-                <div class="mb-3">
-                    {{ form.password }}
-                    {{ form.password.errors }}
-                </div>
-
+                {% for field in form %}
+                  <div>
+                    {{ field }}
+                    {% for error in field.errors %}
+                      <div class="text-red-600">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                {% endfor %}
                 <button type="submit" class="btn btn-primary w-100">Login</button>
+              </form>
+              
+
             </form>
         </div>
     </div>

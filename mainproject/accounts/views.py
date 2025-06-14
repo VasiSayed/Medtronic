@@ -32,18 +32,26 @@ def send_login_email(user):
 def login_view(request):
     form = LoginForm(request, data=request.POST or None)
 
-    if request.method == "POST" and form.is_valid():
-        user = form.get_user()       
-        login(request, user)   
-        now = timezone.now()        
-        activity = UserActivity.objects.create(user=user,login_date=now.date(),
-            start_time=now.time())
-        request.session["activity_id"] = activity.pk
-        send_login_email(user)
-        messages.success(request, f"Login successful. Welcome, {user.username}!")
-        return redirect(reverse_lazy("home"))
+    if request.method == "POST":
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            now = timezone.now()
+            activity = UserActivity.objects.create(
+                user=user,
+                login_date=now.date(),
+                start_time=now.time()
+            )
+            request.session["activity_id"] = activity.pk
+            send_login_email(user)
+            messages.success(request, f"Login successful. Welcome, {user.username}!")
+            return redirect(reverse_lazy("home"))
+        else:
+            messages.error(request, "Invalid credentials. Please try again.")
 
     return render(request, 'accounts/login.html', {'form': form})
+
+
 
 
 
@@ -98,24 +106,24 @@ def send_registration_emails(new_user, created_by, password):
             fail_silently=True,
         )
 
-
 @login_required
 def register_view(request):
     if request.user.role != 'admin':
         messages.error(request, "You are not authorized to access the registration page.")
         return redirect('home')
 
+    form = RegisterForm(request.POST or None)
     if request.method == 'POST':
-        form = RegisterForm(request.POST)
         if form.is_valid():
             password = form.cleaned_data['password1']
-            new_user = form.save()
+            new_user = form.save(commit=False)
+            new_user.set_password(password)
+            new_user.save()
             send_registration_emails(new_user, request.user, password)
             messages.success(request, f"User '{new_user.username}' created and notified successfully.")
             return redirect('home')
         else:
             messages.error(request, "Please correct the errors below.")
-    else:
-        form = RegisterForm()
-
+            return render(request, 'accounts/register.html', {'form': form})
+        
     return render(request, 'accounts/register.html', {'form': form})

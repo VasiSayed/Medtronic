@@ -45,7 +45,6 @@ class Product(models.Model):
         validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp'])],
         help_text="Upload PDF, Word, or Image file"
     )
-
     video = models.FileField(
         upload_to='product_files/videos/',
         blank=True,
@@ -53,8 +52,6 @@ class Product(models.Model):
         validators=[FileExtensionValidator(allowed_extensions=['mp4', 'mov', 'avi', 'mkv'])],
         help_text="Upload video file (e.g., .mp4, .mov)"
     )
-
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -86,6 +83,12 @@ class Region(models.Model):
     def __str__(self):
         return self.country_name
 
+class AttachmentDownloadLog(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='downloads')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    downloaded_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return f"{self.product.name}  - {self.downloaded_at}"
 
 class OrderProductOnline(models.Model):
     class Status(models.TextChoices):
@@ -94,7 +97,7 @@ class OrderProductOnline(models.Model):
         DELIVERED = "delivered", "Delivered"
 
     region = models.ForeignKey(Region, on_delete=models.PROTECT, related_name="orders")
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="orders")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="orders",null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="orders")
     name = models.CharField(max_length=100, help_text="Person requesting")
     address = models.TextField(help_text="Full address of requester")
@@ -116,3 +119,25 @@ class SearchProduct(models.Model):
 
     def __str__(self):
         return f"{self.user.username} searched {self.product.name} on {self.date.strftime('%Y-%m-%d %H:%M')}"
+    
+    
+class Wishlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlists')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='wishlisted_by')
+    added_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('user', 'product')
+        ordering = ['-added_at']
+        verbose_name = 'Wishlist Item'
+        verbose_name_plural = 'Wishlist Items'
+
+    def __str__(self):
+        return f"{self.user.username} → {self.product.name}"
+    
+
+class AttachmentDownloadLog(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='downloads')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    downloaded_at = models.DateTimeField(auto_now_add=True)
